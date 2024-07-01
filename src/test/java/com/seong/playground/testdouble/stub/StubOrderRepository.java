@@ -1,24 +1,23 @@
-package com.seong.playground.testdouble.repository;
+package com.seong.playground.testdouble.stub;
 
 import com.seong.playground.testdouble.domain.Order;
 import com.seong.playground.testdouble.service.OrderRepository;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
 
-@Repository
-@RequiredArgsConstructor
-public class OrderMemoryRepository implements OrderRepository {
+public class StubOrderRepository implements OrderRepository {
 
     private final Map<Long, Order> database = new HashMap<>();
 
+    public void stub(Order order) {
+        database.put(getNextId(), order);
+    }
+
     @Override
     public long save(Order order) {
-        long nextId = getNextId();
-        database.put(nextId, order);
-        return nextId;
+        stub(order);
+        return database.size();
     }
 
     @Override

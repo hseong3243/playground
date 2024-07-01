@@ -29,4 +29,7 @@ public class Cart {
             .toList();
     }
 
+    public void addCartItem(CartItem cartItem) {
+        items.add(cartItem);
+    }
 }

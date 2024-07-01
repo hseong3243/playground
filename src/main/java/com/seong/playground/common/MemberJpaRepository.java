@@ -15,4 +15,10 @@ public class MemberJpaRepository implements MemberRepository{
     public Optional<Member> findById(Long memberId) {
         return memberDataJpaRepository.findById(memberId);
     }
+
+    @Override
+    public Long save(Member member) {
+        memberDataJpaRepository.save(member);
+        return member.getMemberId();
+    }
 }

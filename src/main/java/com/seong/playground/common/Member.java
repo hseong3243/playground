@@ -18,4 +18,10 @@ public class Member {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long memberId;
 
+    public Member() {
+    }
+
+    public Member(Long memberId) {
+        this.memberId = memberId;
+    }
 }

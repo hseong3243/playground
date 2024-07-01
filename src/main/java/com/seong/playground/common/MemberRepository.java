@@ -6,4 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface MemberRepository {
 
     Optional<Member> findById(Long memberId);
+
+    Long save(Member member);
 }
