@@ -19,4 +19,14 @@ public class CartMemoryRepository implements CartRepository {
             .filter(cart -> cart.getMember().equals(member))
             .findAny();
     }
+
+    @Override
+    public Long save(Cart cart) {
+        database.put(getNextId(), cart);
+        return (long) database.size();
+    }
+
+    private Long getNextId() {
+        return (long) (database.size() + 1);
+    }
 }

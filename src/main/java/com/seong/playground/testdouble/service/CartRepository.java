@@ -7,4 +7,6 @@ import java.util.Optional;
 public interface CartRepository {
 
     Optional<Cart> findByMember(Member member);
+
+    Long save(Cart cart);
 }
