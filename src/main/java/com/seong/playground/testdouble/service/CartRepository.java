@@ -9,4 +9,6 @@ public interface CartRepository {
     Optional<Cart> findByMember(Member member);
 
     Long save(Cart cart);
+
+    Optional<Cart> findByMemberId(Long memberId);
 }

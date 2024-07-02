@@ -33,4 +33,9 @@ public class StubCartRepository implements CartRepository {
         stub(cart);
         return (long) database.size();
     }
+
+    @Override
+    public Optional<Cart> findByMemberId(Long memberId) {
+        return database.values().stream().findFirst();
+    }
 }

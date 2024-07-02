@@ -26,6 +26,12 @@ public class CartMemoryRepository implements CartRepository {
         return (long) database.size();
     }
 
+    @Override
+    public Optional<Cart> findByMemberId(Long memberId) {
+        return database.values().stream().filter(cart -> cart.getMember().getMemberId().equals(memberId))
+                .findAny();
+    }
+
     private Long getNextId() {
         return (long) (database.size() + 1);
     }

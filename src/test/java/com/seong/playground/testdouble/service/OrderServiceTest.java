@@ -40,6 +40,42 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class OrderServiceTest {
 
     @Nested
+    @DisplayName("더미 테스트")
+    class UsingDummy {
+        @InjectMocks
+        private OrderService orderService;
+
+        @Mock
+        private MemberRepository memberRepository;
+
+        @Mock
+        private CartRepository cartRepository;
+
+        @Mock
+        private OrderItemRepository orderItemRepository;
+
+        @Mock
+        private OrderRepository orderRepository;
+
+        @Mock
+        private EventPublisher eventPublisher;
+
+        @Test
+        @DisplayName("[Mockito] 주문을 조회한다.")
+        void findOrder() {
+            //given
+            Order order = new Order(1L, MemberFixture.member());
+            given(orderRepository.findById(any())).willReturn(Optional.of(order));
+
+            //when
+            Order findOrder = orderService.findOrder(1L);
+
+            //then
+            assertThat(findOrder).isEqualTo(order);
+        }
+    }
+
+    @Nested
     @DisplayName("목 테스트")
     class UsingMock {
 
@@ -70,9 +106,12 @@ class OrderServiceTest {
             Product product = Product.create(1L, "상품1", 10);
             cart.addCartItem(CartItem.create(1L, product, 2));
 
-            given(memberRepository.findById(any())).willReturn(Optional.of(member));
-            given(cartRepository.findByMember(any())).willReturn(Optional.of(cart));
-            given(orderItemRepository.getNextId()).willReturn(1L, 2L, 3L);
+            given(memberRepository.findById(any()))
+                    .willReturn(Optional.of(member));
+            given(cartRepository.findByMember(any()))
+                    .willReturn(Optional.of(cart));
+            given(orderItemRepository.getNextId())
+                    .willReturn(1L, 2L, 3L);
 
             //when
             orderService.createOrder(member.getMemberId());
@@ -134,26 +173,21 @@ class OrderServiceTest {
         class WithImplementation {
 
             private OrderService orderService;
-
-            @Mock
-            private MemberRepository memberRepository;
-
-            @Mock
-            private CartRepository cartRepository;
-
-            @Mock
-            private OrderItemRepository orderItemRepository;
-
-            @Mock
-            private OrderRepository orderRepository;
-
+            private StubMemberRepository memberRepository;
+            private StubCartRepository cartRepository;
+            private StubOrderItemRepository orderItemRepository;
+            private StubOrderRepository orderRepository;
             private SpyEventPublisher eventPublisher;
 
             @BeforeEach
             void setUp() {
+                memberRepository = new StubMemberRepository();
+                cartRepository = new StubCartRepository();
+                orderItemRepository = new StubOrderItemRepository();
+                orderRepository = new StubOrderRepository();
                 eventPublisher = new SpyEventPublisher();
-                orderService = new OrderService(memberRepository, cartRepository,
-                    orderItemRepository, orderRepository, eventPublisher);
+                orderService = new OrderService(memberRepository, cartRepository, orderItemRepository,
+                        orderRepository, eventPublisher);
             }
 
             @Test
@@ -165,9 +199,8 @@ class OrderServiceTest {
                 Product product = Product.create(1L, "상품", 10);
                 cart.addCartItem(CartItem.create(1L, product, 2));
 
-                given(memberRepository.findById(any())).willReturn(Optional.of(member));
-                given(cartRepository.findByMember(any())).willReturn(Optional.of(cart));
-                given(orderItemRepository.getNextId()).willReturn(1L, 2L);
+                memberRepository.stub(member);
+                cartRepository.stub(cart);
 
                 //when
                 orderService.createOrder(member.getMemberId());
