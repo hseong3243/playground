@@ -1,6 +1,7 @@
 package com.seong.playground.testdouble.domain;
 
 import com.seong.playground.common.Member;
+import com.seong.playground.testdouble.service.OrderItemRepository;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -23,6 +24,16 @@ public class Order {
         Order order = new Order(orderId, member);
         order.addAll(orderItems);
         return order;
+    }
+
+
+    public static Order create(long nextId, Cart cart, OrderItemRepository orderItemRepository) {
+        List<OrderItem> list = cart.getProductsToBuy().stream()
+                .map(cartItem -> OrderItem.create(
+                        orderItemRepository.getNextId(),
+                        cartItem
+                )).toList();
+        return create(nextId, cart.getMember(), list);
     }
 
     private void addAll(List<OrderItem> orderItems) {

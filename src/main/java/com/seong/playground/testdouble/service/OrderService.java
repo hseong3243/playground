@@ -24,18 +24,16 @@ public class OrderService {
     private final EventPublisher eventPublisher;
 
     public Long createOrder(Long memberId) {
-        Member member = memberRepository.findById(memberId)
-            .orElseThrow(NoSuchElementException::new);
-        Cart cart = cartRepository.findByMember(member)
-            .orElseThrow(NoSuchElementException::new);
+        Cart cart = cartRepository.findByMemberId(memberId)
+                .orElseThrow(NoSuchElementException::new);
 
-        List<OrderItem> orderItems = cart.getProductsToBuy().stream()
-            .map(cartItem -> OrderItem.create(
-                orderItemRepository.getNextId(),
-                cartItem
-            )).toList();
-        Order order = Order.create(orderRepository.getNextId(), member, orderItems);
+        Order order = Order.create(orderRepository.getNextId(), cart, orderItemRepository);
         eventPublisher.publish(CreateOrderEvent.create(order));
         return orderRepository.save(order);
+    }
+
+    public Order findOrder(Long orderId) {
+        return orderRepository.findById(orderId)
+                .orElseThrow(NoSuchElementException::new);
     }
 }
