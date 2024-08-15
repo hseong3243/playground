@@ -4,6 +4,8 @@ import com.seong.playground.common.Member;
 import com.seong.playground.common.MemberRepository;
 import com.seong.playground.lock.Event;
 import com.seong.playground.lock.EventMember;
+import com.seong.playground.lock.aop.DistributedLock;
+import com.seong.playground.lock.aop.PubSubLock;
 import com.seong.playground.lock.repository.CacheRepository;
 import com.seong.playground.lock.repository.EventMemberRepository;
 import com.seong.playground.lock.repository.EventRepository;
@@ -35,6 +37,16 @@ public class EventService {
         EventMember newEventMember = event.join(member, joinedMember);
         eventMemberRepository.save(newEventMember);
         return newEventMember.getEventMemberId();
+    }
+
+    @DistributedLock
+    public Long joinEventWithDistributedLock(JoinEventCommand command) {
+        return joinEvent(command);
+    }
+
+    @PubSubLock
+    public Long joinEventWithPubSubLock(JoinEventCommand command) {
+        return joinEvent(command);
     }
 
     public Long joinEventWithOptimistic(JoinEventCommand command) {

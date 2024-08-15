@@ -43,12 +43,15 @@ class EventServiceTest extends BaseIntegrationTest {
         private List<Member> members;
         private Event event;
 
+        private final int threadPoolSize = 25;
+        private final int limitOfPeople = 10;
+
         @BeforeEach
         void setUp() {
-            executor = Executors.newFixedThreadPool(25);
-            latch = new CountDownLatch(25);
-            members = createMembers(25);
-            event = new Event(10);
+            executor = Executors.newFixedThreadPool(threadPoolSize);
+            latch = new CountDownLatch(threadPoolSize);
+            members = createMembers(threadPoolSize);
+            event = new Event(limitOfPeople);
 
             persist(members, event);
         }
@@ -65,7 +68,7 @@ class EventServiceTest extends BaseIntegrationTest {
         void withOutLock() throws InterruptedException {
             //given
             //when
-            for (int i = 0; i < 25; i++) {
+            for (int i = 0; i < threadPoolSize; i++) {
                 int finalI = i;
                 executor.submit(() -> {
                     JoinEventCommand command = new JoinEventCommand(
@@ -78,7 +81,7 @@ class EventServiceTest extends BaseIntegrationTest {
 
             //then
             Long count = countEventMembers(event);
-            assertThat(count).isNotEqualTo(10);
+            assertThat(count).isNotEqualTo(limitOfPeople);
         }
 
         @Test
@@ -86,7 +89,7 @@ class EventServiceTest extends BaseIntegrationTest {
         void optimisticLock() throws InterruptedException {
             //given
             //when
-            for (int i = 0; i < 25; i++) {
+            for (int i = 0; i < threadPoolSize; i++) {
                 int finalI = i;
                 executor.submit(() -> {
                     JoinEventCommand command = new JoinEventCommand(
@@ -102,7 +105,7 @@ class EventServiceTest extends BaseIntegrationTest {
 
             //then
             Long count = countEventMembers(event);
-            assertThat(count).isEqualTo(10);
+            assertThat(count).isEqualTo(limitOfPeople);
         }
 
         @Test
@@ -110,7 +113,7 @@ class EventServiceTest extends BaseIntegrationTest {
         void pessimisticLock() throws InterruptedException {
             //given
             //when
-            for (int i = 0; i < 25; i++) {
+            for (int i = 0; i < threadPoolSize; i++) {
                 int finalI = i;
                 executor.submit(() -> {
                     JoinEventCommand command = new JoinEventCommand(
@@ -126,7 +129,7 @@ class EventServiceTest extends BaseIntegrationTest {
 
             //then
             Long count = countEventMembers(event);
-            assertThat(count).isEqualTo(10);
+            assertThat(count).isEqualTo(limitOfPeople);
         }
 
         @Test
@@ -134,7 +137,7 @@ class EventServiceTest extends BaseIntegrationTest {
         void redisLock() throws InterruptedException {
             //given
             //when
-            for (int i = 0; i < 25; i++) {
+            for (int i = 0; i < threadPoolSize; i++) {
                 int finalI = i;
                 executor.submit(() -> {
                     JoinEventCommand command = new JoinEventCommand(
@@ -150,7 +153,31 @@ class EventServiceTest extends BaseIntegrationTest {
 
             //then
             Long count = countEventMembers(event);
-            assertThat(count).isEqualTo(10);
+            assertThat(count).isEqualTo(limitOfPeople);
+        }
+
+        @Test
+        @DisplayName("분산 락 - 스핀 락 AOP")
+        void redisLockWithAOP() throws InterruptedException {
+            //given
+            //when
+            for (int i = 0; i < threadPoolSize; i++) {
+                int finalI = i;
+                executor.submit(() -> {
+                    JoinEventCommand command = new JoinEventCommand(
+                        members.get(finalI).getMemberId(), event.getEventId());
+                    try {
+                        eventService.joinEventWithDistributedLock(command);
+                    } finally {
+                        latch.countDown();
+                    }
+                });
+            }
+            latch.await();
+
+            //then
+            Long count = countEventMembers(event);
+            assertThat(count).isEqualTo(limitOfPeople);
         }
 
         @Test
@@ -158,7 +185,7 @@ class EventServiceTest extends BaseIntegrationTest {
         void pubSubLock() throws InterruptedException {
             //given
             //when
-            for (int i = 0; i < 25; i++) {
+            for (int i = 0; i < threadPoolSize; i++) {
                 int finalI = i;
                 executor.submit(() -> {
                     JoinEventCommand command = new JoinEventCommand(
@@ -174,7 +201,31 @@ class EventServiceTest extends BaseIntegrationTest {
 
             //then
             Long count = countEventMembers(event);
-            assertThat(count).isEqualTo(10);
+            assertThat(count).isEqualTo(limitOfPeople);
+        }
+
+        @Test
+        @DisplayName("분산 락 - Pub/Sub AOP")
+        void pubSubLockWithAop() throws InterruptedException {
+            //given
+            //when
+            for (int i = 0; i < threadPoolSize; i++) {
+                int finalI = i;
+                executor.submit(() -> {
+                    JoinEventCommand command = new JoinEventCommand(
+                        members.get(finalI).getMemberId(), event.getEventId());
+                    try {
+                        eventService.joinEventWithPubSubLock(command);
+                    } finally {
+                        latch.countDown();
+                    }
+                });
+            }
+            latch.await();
+
+            //then
+            Long count = countEventMembers(event);
+            assertThat(count).isEqualTo(limitOfPeople);
         }
     }
 
